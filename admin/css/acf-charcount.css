@@ -1,0 +1,37 @@
+/**
+ * ACF Character Count — Counter Styles
+ *
+ * @package ACF_Charcount
+ */
+
+/* Base counter style */
+.acf-cc-counter {
+	display: inline-block;
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 1.4;
+	color: #646970;
+}
+
+/* Counter positioned below the field (default) */
+.acf-input > .acf-cc-counter {
+	display: block;
+	margin-top: 4px;
+}
+
+/* Counter positioned alongside a label */
+.acf-label .acf-cc-counter {
+	margin-left: 6px;
+	font-weight: 400;
+}
+
+/* Warning state: approaching the limit (75%+) */
+.acf-cc-counter.acf-cc-warning {
+	color: #996800;
+}
+
+/* Over-limit state: count exceeds max */
+.acf-cc-counter.acf-cc-over {
+	color: #d63638;
+	font-weight: 500;
+}
