@@ -87,10 +87,10 @@ function acf_cc_init() {
 		return;
 	}
 
-	// Load plugin classes.
+	// Load plugin classes (settings first — other classes reference it).
+	require_once ACF_CC_PLUGIN_DIR . 'includes/class-settings.php';
 	require_once ACF_CC_PLUGIN_DIR . 'includes/class-field-config.php';
 	require_once ACF_CC_PLUGIN_DIR . 'includes/class-counter.php';
-	require_once ACF_CC_PLUGIN_DIR . 'includes/class-settings.php';
 
 	// Initialize classes.
 	$field_config = new ACF_CC_Field_Config();
@@ -129,18 +129,22 @@ function acf_cc_enqueue_admin_assets() {
 		true
 	);
 
-	// Build configuration to pass to JavaScript.
-	$show_counter_without_limit = get_option( 'acf_cc_show_without_limit', '0' );
-	$counter_position           = get_option( 'acf_cc_counter_position', 'below' );
+	// Pass plugin settings to JavaScript.
+	$settings = ACF_CC_Settings::get_all();
 
 	wp_localize_script(
 		'acf-charcount',
 		'acfCharcount',
 		array(
-			'fieldTypes'          => array( 'text', 'textarea', 'wysiwyg' ),
-			'showWithoutLimit'    => ( '1' === $show_counter_without_limit ),
-			'counterPosition'     => $counter_position,
-			'i18n'                => array(
+			'fieldTypes'      => array( 'text', 'textarea', 'wysiwyg' ),
+			'displayStyle'    => $settings['display_style'],
+			'counterPosition' => $settings['counter_position'],
+			'defaults'        => array(
+				'text'     => $settings['max_text'],
+				'textarea' => $settings['max_textarea'],
+				'wysiwyg'  => $settings['max_wysiwyg'],
+			),
+			'i18n'            => array(
 				'characters' => __( 'characters', 'acf-charcount' ),
 			),
 		)

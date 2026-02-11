@@ -140,8 +140,13 @@
 			max = parseMaxcharsFromInstructions( $field );
 		}
 
-		// If no max and setting says don't show without limit, skip.
-		if ( ! max && ! config.showWithoutLimit ) {
+		// Apply plugin default max length for this field type.
+		if ( ! max && config.defaults && config.defaults[ type ] ) {
+			max = parseInt( config.defaults[ type ], 10 ) || 0;
+		}
+
+		// In "configured" mode, skip fields without any limit.
+		if ( ! max && config.displayStyle !== 'always' ) {
 			return null;
 		}
 
@@ -165,20 +170,18 @@
 	}
 
 	/**
-	 * Position the counter element based on plugin settings.
+	 * Apply counter position class based on plugin settings.
+	 *
+	 * Both positions keep the counter below the field inside .acf-input;
+	 * the CSS class controls left vs right alignment.
 	 *
 	 * @param {jQuery} $field   The ACF field jQuery element.
 	 * @param {jQuery} $counter The counter element.
 	 */
 	function positionCounter( $field, $counter ) {
-		if ( 'label' === config.counterPosition ) {
-			var $label = $field.find( '.acf-label label' ).first();
-			if ( $label.length ) {
-				$counter.appendTo( $label );
-				return;
-			}
+		if ( 'below-left' === config.counterPosition ) {
+			$counter.addClass( 'acf-cc-align-left' );
 		}
-		// Default: counter stays in .acf-input (rendered by PHP after the field).
 	}
 
 	/**
