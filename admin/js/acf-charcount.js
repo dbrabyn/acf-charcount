@@ -38,6 +38,22 @@
 	}
 
 	/**
+	 * Decode HTML entities and strip tags to get plain text length.
+	 *
+	 * Uses a temporary DOM element to let the browser handle entity
+	 * decoding (e.g. &amp; → &, &nbsp; → space) so the character
+	 * count reflects what the user actually sees.
+	 *
+	 * @param {string} html Raw HTML string.
+	 * @return {string} Plain text with entities decoded and tags stripped.
+	 */
+	function stripHtmlAndDecode( html ) {
+		var tmp = document.createElement( 'div' );
+		tmp.innerHTML = html;
+		return tmp.textContent || tmp.innerText || '';
+	}
+
+	/**
 	 * Get the current character count from a field's input element.
 	 *
 	 * @param {jQuery} $field The ACF field jQuery element.
@@ -50,14 +66,13 @@
 		if ( 'wysiwyg' === type ) {
 			var editorId = $field.find( '.wp-editor-area' ).attr( 'id' );
 			if ( editorId && typeof tinymce !== 'undefined' && tinymce.get( editorId ) ) {
+				// Visual mode: TinyMCE's format:'text' strips HTML and decodes entities.
 				var editor = tinymce.get( editorId );
 				value = editor.getContent( { format: 'text' } ) || '';
 			} else {
+				// Text mode: read raw textarea and strip HTML + decode entities.
 				value = $field.find( '.wp-editor-area' ).val() || '';
-				// Strip HTML when reading raw textarea in text mode.
-				var tmp = document.createElement( 'div' );
-				tmp.innerHTML = value;
-				value = tmp.textContent || tmp.innerText || '';
+				value = stripHtmlAndDecode( value );
 			}
 		} else {
 			var $input = $field.find( 'input[type="text"], textarea' ).first();
@@ -108,13 +123,17 @@
 			return $existing;
 		}
 
-		// Determine max length: check data-max on input (ACF native maxlength)
-		// or parse [maxchars:N] from instructions.
-		var $input = $field.find( 'input[type="text"], textarea' ).first();
-		var max    = 0;
+		var type = $field.data( 'type' );
+		var max  = 0;
 
-		if ( $input.length && $input.attr( 'maxlength' ) ) {
-			max = parseInt( $input.attr( 'maxlength' ), 10 ) || 0;
+		// WYSIWYG fields don't have a native maxlength attribute, so
+		// only check [maxchars:N] in instructions. Text/textarea fields
+		// can also use ACF's built-in maxlength setting.
+		if ( 'wysiwyg' !== type ) {
+			var $input = $field.find( 'input[type="text"], textarea' ).first();
+			if ( $input.length && $input.attr( 'maxlength' ) ) {
+				max = parseInt( $input.attr( 'maxlength' ), 10 ) || 0;
+			}
 		}
 
 		if ( ! max ) {
@@ -195,7 +214,10 @@
 	 * Initialize WYSIWYG counter bindings.
 	 *
 	 * TinyMCE editors may not be initialized when this runs, so we
-	 * watch for the editor init event as well.
+	 * watch for the editor init event as well. Also handles Visual/Text
+	 * tab switching — WordPress destroys and recreates TinyMCE when
+	 * toggling between tabs, so we re-bind on each AddEditor event
+	 * and listen for tab clicks to trigger an immediate count update.
 	 *
 	 * @param {jQuery} $field The ACF field jQuery element.
 	 * @param {string} type   The field type.
@@ -218,7 +240,8 @@
 			bindTinymce( tinymce.get( editorId ), $field, type );
 		}
 
-		// Also watch for TinyMCE init (handles lazy-loaded editors).
+		// Watch for TinyMCE init — fires on first load and each time
+		// the user switches back to Visual mode (editor is re-created).
 		if ( typeof tinymce !== 'undefined' ) {
 			tinymce.on( 'AddEditor', function( e ) {
 				if ( e.editor && e.editor.id === editorId ) {
@@ -228,6 +251,15 @@
 				}
 			} );
 		}
+
+		// Handle Visual/Text tab clicks. When switching tabs, the active
+		// input changes so we update the count after a short delay to let
+		// WordPress complete the editor swap.
+		$field.find( '.wp-editor-tabs' ).on( 'click', '.wp-switch-editor', function() {
+			setTimeout( function() {
+				updateCounter( $field, type );
+			}, 100 );
+		} );
 	}
 
 	/**
