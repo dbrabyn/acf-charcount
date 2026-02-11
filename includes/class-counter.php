@@ -45,18 +45,27 @@ class ACF_CC_Counter {
 	 * Render the character counter element after a field.
 	 *
 	 * Outputs a counter for fields that have a character limit set
-	 * (via ACF maxlength or [maxchars:N] in instructions), or for
-	 * all fields if the "show without limit" option is enabled.
+	 * (via ACF maxlength, [maxchars:N] in instructions, or plugin defaults),
+	 * or for all fields if the display style is "always".
 	 *
 	 * @param array $field The ACF field configuration array.
 	 * @return void
 	 */
 	public function render_counter( $field ) {
-		$max_length         = $this->field_config->get_max_length( $field );
-		$show_without_limit = ( '1' === get_option( 'acf_cc_show_without_limit', '0' ) );
+		$max_length    = $this->field_config->get_max_length( $field );
+		$display_style = ACF_CC_Settings::get( 'display_style' );
 
-		// Skip if no limit and option to show without limit is off.
-		if ( 0 === $max_length && ! $show_without_limit ) {
+		// Apply plugin default max length if no per-field limit is set.
+		if ( 0 === $max_length ) {
+			$default_key = 'max_' . $field['type'];
+			$default_max = ACF_CC_Settings::get( $default_key );
+			if ( $default_max > 0 ) {
+				$max_length = $default_max;
+			}
+		}
+
+		// In "configured" mode, skip fields without any limit.
+		if ( 0 === $max_length && 'configured' === $display_style ) {
 			return;
 		}
 
@@ -68,7 +77,13 @@ class ACF_CC_Counter {
 			$data_attrs = ' data-max="' . esc_attr( $max_length ) . '"';
 		}
 
-		echo '<span class="acf-cc-counter"' . $data_attrs . '>';
+		// Build CSS classes including position alignment.
+		$classes = 'acf-cc-counter';
+		if ( 'below-left' === ACF_CC_Settings::get( 'counter_position' ) ) {
+			$classes .= ' acf-cc-align-left';
+		}
+
+		echo '<span class="' . esc_attr( $classes ) . '"' . $data_attrs . '>';
 		echo '<span class="acf-cc-current">' . esc_html( $current ) . '</span>';
 		if ( $max_length > 0 ) {
 			echo ' / <span class="acf-cc-max">' . esc_html( $max_length ) . '</span>';

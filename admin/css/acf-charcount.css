@@ -20,6 +20,11 @@
 	text-align: right;
 }
 
+/* Left-aligned counter position */
+.acf-input > .acf-cc-counter.acf-cc-align-left {
+	text-align: left;
+}
+
 /* Counter positioned alongside a label */
 .acf-label .acf-cc-counter {
 	margin-left: 6px;
