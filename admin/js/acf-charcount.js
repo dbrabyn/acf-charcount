@@ -15,18 +15,26 @@
 	}
 
 	var config = window.acfCharcount || {};
-	var i18n   = config.i18n || {};
 
 	/**
-	 * Strip HTML tags from a string.
+	 * Parse [maxchars:N] from a field's instruction text in the DOM.
 	 *
-	 * @param {string} html The HTML string.
-	 * @return {string} Plain text.
+	 * Falls back to checking the instruction element rendered by ACF
+	 * below the field label, allowing per-field max length without
+	 * needing server-side field group data in JS.
+	 *
+	 * @param {jQuery} $field The ACF field jQuery element.
+	 * @return {number} Parsed max length, or 0 if not found.
 	 */
-	function stripTags( html ) {
-		var tmp = document.createElement( 'div' );
-		tmp.innerHTML = html;
-		return tmp.textContent || tmp.innerText || '';
+	function parseMaxcharsFromInstructions( $field ) {
+		var $instructions = $field.find( '.description' ).first();
+		if ( ! $instructions.length ) {
+			return 0;
+		}
+
+		var text  = $instructions.text() || '';
+		var match = text.match( /\[maxchars:(\d+)\]/ );
+		return match ? parseInt( match[1], 10 ) : 0;
 	}
 
 	/**
@@ -43,12 +51,13 @@
 			var editorId = $field.find( '.wp-editor-area' ).attr( 'id' );
 			if ( editorId && typeof tinymce !== 'undefined' && tinymce.get( editorId ) ) {
 				var editor = tinymce.get( editorId );
-				// Use text content from TinyMCE, stripping HTML.
 				value = editor.getContent( { format: 'text' } ) || '';
 			} else {
-				// Fallback: read from the textarea directly (text mode).
 				value = $field.find( '.wp-editor-area' ).val() || '';
-				value = stripTags( value );
+				// Strip HTML when reading raw textarea in text mode.
+				var tmp = document.createElement( 'div' );
+				tmp.innerHTML = value;
+				value = tmp.textContent || tmp.innerText || '';
 			}
 		} else {
 			var $input = $field.find( 'input[type="text"], textarea' ).first();
@@ -61,8 +70,8 @@
 	/**
 	 * Update the counter display for a field.
 	 *
-	 * @param {jQuery} $field  The ACF field jQuery element.
-	 * @param {string} type    The field type.
+	 * @param {jQuery} $field The ACF field jQuery element.
+	 * @param {string} type   The field type.
 	 */
 	function updateCounter( $field, type ) {
 		var $counter = $field.find( '.acf-cc-counter' ).first();
@@ -73,17 +82,67 @@
 		var count = getCharCount( $field, type );
 		var max   = parseInt( $counter.attr( 'data-max' ), 10 ) || 0;
 
-		$counter.find( '.acf-cc-count' ).text( count );
+		$counter.find( '.acf-cc-current' ).text( count );
 
-		// Update warning states.
-		$counter.removeClass( 'acf-cc-warning acf-cc-over' );
-		if ( max > 0 ) {
-			if ( count > max ) {
-				$counter.addClass( 'acf-cc-over' );
-			} else if ( count >= Math.floor( max * 0.75 ) ) {
-				$counter.addClass( 'acf-cc-warning' );
-			}
+		// Toggle over-limit class.
+		$counter.removeClass( 'acf-cc-over' );
+		if ( max > 0 && count > max ) {
+			$counter.addClass( 'acf-cc-over' );
 		}
+	}
+
+	/**
+	 * Build and insert the counter element for a field.
+	 *
+	 * If the PHP-rendered counter is already present (server-side render),
+	 * this is a no-op. Otherwise it creates the counter from JS — useful
+	 * for dynamically added repeater/flex rows where PHP won't re-render.
+	 *
+	 * @param {jQuery} $field The ACF field jQuery element.
+	 * @return {jQuery|null} The counter element, or null if skipped.
+	 */
+	function ensureCounter( $field ) {
+		// Already rendered by PHP.
+		var $existing = $field.find( '.acf-cc-counter' ).first();
+		if ( $existing.length ) {
+			return $existing;
+		}
+
+		// Determine max length: check data-max on input (ACF native maxlength)
+		// or parse [maxchars:N] from instructions.
+		var $input = $field.find( 'input[type="text"], textarea' ).first();
+		var max    = 0;
+
+		if ( $input.length && $input.attr( 'maxlength' ) ) {
+			max = parseInt( $input.attr( 'maxlength' ), 10 ) || 0;
+		}
+
+		if ( ! max ) {
+			max = parseMaxcharsFromInstructions( $field );
+		}
+
+		// If no max and setting says don't show without limit, skip.
+		if ( ! max && ! config.showWithoutLimit ) {
+			return null;
+		}
+
+		// Build the counter markup.
+		var html = '<span class="acf-cc-counter"';
+		if ( max > 0 ) {
+			html += ' data-max="' + max + '"';
+		}
+		html += '>';
+		html += '<span class="acf-cc-current">0</span>';
+		if ( max > 0 ) {
+			html += ' / <span class="acf-cc-max">' + max + '</span>';
+		}
+		html += ' ' + ( config.i18n && config.i18n.characters ? config.i18n.characters : 'characters' );
+		html += '</span>';
+
+		var $counter = acf.$( html );
+		$field.find( '.acf-input' ).first().append( $counter );
+
+		return $counter;
 	}
 
 	/**
@@ -110,9 +169,9 @@
 	 */
 	function initField( $field ) {
 		var type     = $field.data( 'type' );
-		var $counter = $field.find( '.acf-cc-counter' ).first();
+		var $counter = ensureCounter( $field );
 
-		if ( ! $counter.length ) {
+		if ( ! $counter ) {
 			return;
 		}
 

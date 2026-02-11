@@ -52,7 +52,7 @@ class ACF_CC_Counter {
 	 * @return void
 	 */
 	public function render_counter( $field ) {
-		$max_length        = $this->field_config->get_max_length( $field );
+		$max_length         = $this->field_config->get_max_length( $field );
 		$show_without_limit = ( '1' === get_option( 'acf_cc_show_without_limit', '0' ) );
 
 		// Skip if no limit and option to show without limit is off.
@@ -69,9 +69,9 @@ class ACF_CC_Counter {
 		}
 
 		echo '<span class="acf-cc-counter"' . $data_attrs . '>';
-		echo '<span class="acf-cc-count">' . esc_html( $current ) . '</span>';
+		echo '<span class="acf-cc-current">' . esc_html( $current ) . '</span>';
 		if ( $max_length > 0 ) {
-			echo ' / ' . esc_html( $max_length );
+			echo ' / <span class="acf-cc-max">' . esc_html( $max_length ) . '</span>';
 		}
 		echo ' ' . esc_html__( 'characters', 'acf-charcount' );
 		echo '</span>';
