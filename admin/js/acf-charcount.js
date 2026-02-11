@@ -184,9 +184,19 @@
 	/**
 	 * Initialize the counter for a single ACF field.
 	 *
+	 * Uses a data attribute guard to prevent double-initialization,
+	 * which can occur when fields exist inside nested repeaters or
+	 * flexible content layouts that trigger multiple append events.
+	 *
 	 * @param {jQuery} $field The ACF field jQuery element.
 	 */
 	function initField( $field ) {
+		// Prevent double-initialization on dynamically added rows.
+		if ( $field.attr( 'data-acf-cc-initialized' ) === 'true' ) {
+			return;
+		}
+		$field.attr( 'data-acf-cc-initialized', 'true' );
+
 		var type     = $field.data( 'type' );
 		var $counter = ensureCounter( $field );
 
@@ -277,13 +287,21 @@
 		updateCounter( $field, type );
 	}
 
+	/**
+	 * Selector string matching supported ACF field type wrappers.
+	 * Used by the generic `append` handler to find countable fields
+	 * inside dynamically added repeater/flex rows at any nesting depth.
+	 */
+	var fieldTypes    = config.fieldTypes || [ 'text', 'textarea', 'wysiwyg' ];
+	var fieldSelector = fieldTypes.map( function( type ) {
+		return '.acf-field[data-type="' + type + '"]';
+	} ).join( ', ' );
+
 	/*
 	 * Register ACF actions for each supported field type.
 	 * `ready_field/type=X` fires once for existing fields on page load.
 	 * `append_field/type=X` fires when new rows are added in repeaters/flex content.
 	 */
-	var fieldTypes = config.fieldTypes || [ 'text', 'textarea', 'wysiwyg' ];
-
 	fieldTypes.forEach( function( type ) {
 		acf.addAction( 'ready_field/type=' + type, function( field ) {
 			initField( field.$el );
@@ -291,6 +309,22 @@
 
 		acf.addAction( 'append_field/type=' + type, function( field ) {
 			initField( field.$el );
+		} );
+	} );
+
+	/*
+	 * Generic `append` handler — catch-all for deeply nested structures.
+	 *
+	 * When a repeater row or flexible content layout is added, ACF fires
+	 * `append` with the new container element. This handler walks the
+	 * container to find all supported fields (at any nesting depth) and
+	 * initializes counters. The data-acf-cc-initialized guard in
+	 * initField() ensures fields already handled by the type-specific
+	 * `append_field/type=X` actions above are not double-initialized.
+	 */
+	acf.addAction( 'append', function( $el ) {
+		$el.find( fieldSelector ).each( function() {
+			initField( acf.$( this ) );
 		} );
 	} );
 
