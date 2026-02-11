@@ -13,21 +13,17 @@
 	color: #646970;
 }
 
-/* Counter positioned below the field (default) */
+/* Counter positioned below the field (default) — right-aligned */
 .acf-input > .acf-cc-counter {
 	display: block;
 	margin-top: 4px;
+	text-align: right;
 }
 
 /* Counter positioned alongside a label */
 .acf-label .acf-cc-counter {
 	margin-left: 6px;
 	font-weight: 400;
-}
-
-/* Warning state: approaching the limit (75%+) */
-.acf-cc-counter.acf-cc-warning {
-	color: #996800;
 }
 
 /* Over-limit state: count exceeds max */
