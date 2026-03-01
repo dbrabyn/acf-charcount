@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Reference code (not for distribution)
+reference/
+
+# Node (in case tooling is added later)
+node_modules/

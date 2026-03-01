@@ -14,15 +14,17 @@ Displays character counts (current/max) beneath ACF fields to help content edito
 ## Tech Stack
 - PHP 8.1+
 - WordPress 6.x
-- ACF Pro (required dependency)
+- ACF Pro or ACF Free (required dependency)
 - Vanilla JS for admin UI (no jQuery dependency if possible, fallback to jQuery if needed for ACF compatibility)
 - No build tools — keep it simple, single JS file enqueued in admin
+- [Plugin Update Checker](https://github.com/YahnisElsts/plugin-update-checker) v5.6 (bundled in `lib/`) for automatic updates via GitHub Releases
 
 ## Conventions
-- Follow WordPress Coding Standards (PHP and JS)
+- Follow WordPress Coding Standards (PHP and JS) and design standards
 - Plugin slug: `acf-charcount`
 - Text domain: `acf-charcount`
 - Function prefix: `acf_cc_`
+- Supported field types defined once in `ACF_CC_SUPPORTED_FIELD_TYPES` constant — used by both PHP and JS
 - All user-facing strings must be translatable via `__()` and `_e()`
 - Escape all output: `esc_html()`, `esc_attr()`, etc.
 - Sanitize all input: `sanitize_text_field()`, `absint()`, etc.
@@ -33,7 +35,7 @@ Displays character counts (current/max) beneath ACF fields to help content edito
 ## File Structure
 ```
 acf-charcount/
-├── acf-charcount.php          # Main plugin file, hooks, activation
+├── acf-charcount.php          # Main plugin file, hooks, activation, update checker
 ├── includes/
 │   ├── class-settings.php     # Settings page registration & rendering
 │   ├── class-counter.php      # Core counter logic, field detection
@@ -43,9 +45,12 @@ acf-charcount/
 │   │   └── acf-charcount.js   # Live counter JS for admin
 │   └── css/
 │       └── acf-charcount.css  # Counter styling
-├── languages/                 # .pot file and translations
-├── README.md                  # Plugin readme
-├── readme.txt                 # WordPress.org readme format
+├── lib/
+│   └── plugin-update-checker/ # Bundled update checker library (v5.6)
+├── languages/
+│   ├── acf-charcount.pot      # Translation template
+│   ├── acf-charcount-fr_FR.po # French translation (editable)
+│   └── acf-charcount-fr_FR.mo # French translation (compiled)
 └── CLAUDE.md                  # This file
 ```
 
@@ -53,8 +58,21 @@ acf-charcount/
 - JS attaches counters via ACF's JavaScript API (`acf.addAction('ready_field/type=text', ...)`)
 - For WYSIWYG fields, listen to TinyMCE `keyup`/`change` events and strip HTML before counting
 - For repeater/flexible content: use ACF's `append` action to attach counters to dynamically added rows
-- Settings page under ACF menu (`acf-options-` subpage or standalone under Settings)
-- Per-field config: add a custom field setting tab or use field instructions to specify max length (e.g., `[maxchars:280]` in instructions field)
+- Settings page under Settings menu
+- Per-field config: use field instructions to specify max length (e.g., `[maxchars:280]` in instructions field)
+- Plugin Update Checker loaded only in admin (`is_admin()` guard) to avoid frontend overhead
+- Class instances stored in `$GLOBALS['acf_cc']` for debugging and extensibility
+
+## Automatic Updates
+- Uses YahnisElsts/plugin-update-checker, bundled in `lib/plugin-update-checker/`
+- Checks GitHub Releases on `dbrabyn/acf-charcount` repo
+- Compares `Version:` plugin header against the latest release tag
+
+### Release Workflow
+1. Bump `Version:` in plugin header and `ACF_CC_VERSION` constant
+2. Commit and push to `main`
+3. Create a GitHub Release with a matching tag (e.g., `v1.1.0`)
+4. WordPress sites pick up the update on their next update check (twice daily)
 
 ## Testing
 - No test framework initially — keep it simple
@@ -67,35 +85,26 @@ acf-charcount/
 - Agent branches: `agent/description-MMDD`
 - Conventional commits: `feat:`, `fix:`, `chore:`, `refactor:`, `docs:`
 
-## Reference Code
-See the `reference/` directory for code from a previous implementation. Use it as inspiration but rewrite from scratch following the conventions in this file. Do NOT copy-paste — the architecture should match our file structure above.
-
-
 ## Goals
 1. Help content editors stay within character limits without leaving the edit screen
-2. Work seamlessly with existing ACF workflows — no extra clicks, no configuration required to get started but provide a settings page to configure the plugin.
-3. Character limit is set by the ACF field's settings, not by the plugin.
-4. Be lightweight — no build tools, no external dependencies, minimal performance impact on admin pages
-5. Be ready for WordPress.org plugin directory submission (proper readme.txt, i18n, coding standards)
-6. Counter should appear in the x / xx characters format and be displayed according to plugin settings page option: alongside the field label or below the field value.
-7. Plugin settings page should include an option to fidplay character count for fields without a character limit set.
+2. Work seamlessly with existing ACF workflows — no extra clicks, no configuration required to get started but provide a settings page to configure the plugin
+3. Character limit is set by the ACF field's settings, not by the plugin
+4. Be lightweight — no build tools, minimal performance impact on admin pages
+5. Counter should appear in the x / xx characters format and be displayed according to plugin settings page option: below-right or below-left
+6. Plugin settings page should include an option to display character count for fields without a character limit set
 
 ## Deliverables
-- [ ] Working plugin installable via zip upload
-- [ ] Live character counters on text, textarea, and WYSIWYG fields
-- [ ] Counters work inside repeater and flexible content sub-fields at any nesting depth
-- [ ] Per-field max length via [maxchars:N] in field instructions
-- [ ] Visual warning state when count exceeds max
-- [ ] French translation (.po/.mo files)
-- [ ] readme.txt in WordPress.org format
-- [ ] Plugin passes WordPress coding standards (PHPCS with WordPress ruleset)
+- [x] Working plugin installable via zip upload
+- [x] Live character counters on text, textarea, and WYSIWYG fields
+- [x] Counters work inside repeater and flexible content sub-fields at any nesting depth
+- [x] Per-field max length via [maxchars:N] in field instructions
+- [x] Visual warning state when count exceeds max
+- [x] French translation (.po/.mo files)
+- [x] Automatic updates via GitHub Releases
 
 ## Non-Goals
 - No frontend output — this is admin-only
 - No integration with Gutenberg/block editor (ACF fields only)
 - No word count — characters only for v1
 - No enforcement/blocking — counters are advisory, not restrictive
-- No global default max lengths via settings page
-
-## TBD
-- Can the plugin be compatible with ACF Pro and ACF Free?
+- No WordPress.org plugin directory submission

@@ -3,8 +3,8 @@
  * Plugin Name: ACF Character Count
  * Plugin URI:  https://github.com/9wdigital/acf-charcount
  * Description: Adds live character counters to ACF text-based fields in the WordPress admin UI.
- * Version:     1.0.0
- * Author:      9W Digital
+ * Version:     1.1.0
+ * Author:      David Brabyn 9W
  * Author URI:  https://9wdigital.com/
  * License:     GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -24,11 +24,29 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Plugin constants.
  */
-define( 'ACF_CC_VERSION', '1.0.0' );
+define( 'ACF_CC_VERSION', '1.1.0' );
 define( 'ACF_CC_PLUGIN_FILE', __FILE__ );
 define( 'ACF_CC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'ACF_CC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'ACF_CC_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
+define( 'ACF_CC_SUPPORTED_FIELD_TYPES', array( 'text', 'textarea', 'wysiwyg' ) );
+
+/**
+ * Plugin Update Checker — automatic updates from GitHub Releases.
+ *
+ * Compares the Version header above against the latest GitHub Release tag.
+ * When a newer release exists, WordPress shows "update available" in the
+ * Plugins screen and handles the update like any other plugin.
+ * Only loaded in admin — no reason to check for updates on the frontend.
+ */
+if ( is_admin() ) {
+	require_once ACF_CC_PLUGIN_DIR . 'lib/plugin-update-checker/plugin-update-checker.php';
+	YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+		'https://github.com/dbrabyn/acf-charcount/',
+		__FILE__,
+		'acf-charcount'
+	);
+}
 
 /**
  * Activation hook — check that ACF is available.
@@ -92,10 +110,12 @@ function acf_cc_init() {
 	require_once ACF_CC_PLUGIN_DIR . 'includes/class-field-config.php';
 	require_once ACF_CC_PLUGIN_DIR . 'includes/class-counter.php';
 
-	// Initialize classes.
-	$field_config = new ACF_CC_Field_Config();
-	$counter      = new ACF_CC_Counter( $field_config );
-	$settings     = new ACF_CC_Settings();
+	// Initialize classes and store for potential debugging/extensibility.
+	$GLOBALS['acf_cc'] = array(
+		'field_config' => new ACF_CC_Field_Config(),
+		'settings'     => new ACF_CC_Settings(),
+	);
+	$GLOBALS['acf_cc']['counter'] = new ACF_CC_Counter( $GLOBALS['acf_cc']['field_config'] );
 
 	// Enqueue admin assets.
 	add_action( 'acf/input/admin_enqueue_scripts', 'acf_cc_enqueue_admin_assets' );
@@ -136,7 +156,7 @@ function acf_cc_enqueue_admin_assets() {
 		'acf-charcount',
 		'acfCharcount',
 		array(
-			'fieldTypes'      => array( 'text', 'textarea', 'wysiwyg' ),
+			'fieldTypes'      => ACF_CC_SUPPORTED_FIELD_TYPES,
 			'displayStyle'    => $settings['display_style'],
 			'counterPosition' => $settings['counter_position'],
 			'defaults'        => array(

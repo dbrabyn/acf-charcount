@@ -36,9 +36,9 @@ class ACF_CC_Counter {
 	public function __construct( ACF_CC_Field_Config $field_config ) {
 		$this->field_config = $field_config;
 
-		add_action( 'acf/render_field/type=text', array( $this, 'render_counter' ) );
-		add_action( 'acf/render_field/type=textarea', array( $this, 'render_counter' ) );
-		add_action( 'acf/render_field/type=wysiwyg', array( $this, 'render_counter' ) );
+		foreach ( ACF_CC_SUPPORTED_FIELD_TYPES as $type ) {
+			add_action( 'acf/render_field/type=' . $type, array( $this, 'render_counter' ) );
+		}
 	}
 
 	/**

@@ -4,24 +4,19 @@
  * @package ACF_Charcount
  */
 
-/* Base counter style */
+/* Base counter style — always rendered inside .acf-input */
 .acf-cc-counter {
-	display: inline-block;
+	display: block;
+	margin-top: 4px;
 	font-size: 12px;
 	font-weight: 400;
 	line-height: 1.4;
 	color: #646970;
-}
-
-/* Counter positioned below the field (default) — right-aligned */
-.acf-input > .acf-cc-counter {
-	display: block;
-	margin-top: 4px;
 	text-align: right;
 }
 
 /* Left-aligned counter position */
-.acf-input > .acf-cc-counter.acf-cc-align-left {
+.acf-cc-counter.acf-cc-align-left {
 	text-align: left;
 }
 
