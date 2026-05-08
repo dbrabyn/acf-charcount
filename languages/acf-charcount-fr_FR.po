@@ -1,11 +1,11 @@
 # French translation for ACF Character Count
-# Copyright (C) 2026 9W Digital
+# Copyright (C) 2026 David Brabyn 9W
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
 "Project-Id-Version: ACF Character Count 1.0.0\n"
 "Report-Msgid-Bugs-To: https://github.com/dbrabyn/acf-charcount/issues\n"
-"Last-Translator: 9W Digital <info@9wdigital.com>\n"
+"Last-Translator: David Brabyn 9W <david@9wdigital.com>\n"
 "Language-Team: French <info@9wdigital.com>\n"
 "Language: fr_FR\n"
 "MIME-Version: 1.0\n"
@@ -35,8 +35,8 @@ msgstr "Ajoute des compteurs de caractères en temps réel aux champs texte ACF 
 
 #. Author of the plugin
 #: acf-charcount.php
-msgid "9W Digital"
-msgstr "9W Digital"
+msgid "David Brabyn 9W"
+msgstr "David Brabyn 9W"
 
 #. Author URI of the plugin
 #: acf-charcount.php
