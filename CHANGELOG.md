@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2026-05-08
+
+### Fixed
+- `load_plugin_textdomain()` moved from `plugins_loaded` to `init` to silence `_doing_it_wrong` notice on WordPress 6.7+.
+- Server- and client-side character counts now agree on emoji and HTML entities. PHP decodes entities before counting; JS counts Unicode codepoints (`Array.from`) instead of UTF-16 code units.
+- `[maxchars:N]` tag is hidden from the visible field instructions. The tag is parsed once via `acf/prepare_field` and stripped before render, so editors no longer see it.
+- TinyMCE `AddEditor` listener no longer accumulates per WYSIWYG field — replaced with a single global handler that looks up registered fields.
+
+### Added
+- `uninstall.php` — deletes the `acf_cc_settings` option on plugin deletion (multisite-aware). Deactivate still preserves settings.
+- Localized printf-style format strings (`%1$s / %2$s characters`, `%s characters`) replace the bag-of-words `characters` translation, allowing word reordering for languages that need it.
+
+### Changed
+- Plugin URI now points to the canonical `dbrabyn/acf-charcount` repo.
+- `ACF_CC_Settings::get_all()` now caches the parsed option for the request, avoiding repeated `wp_parse_args()` work on flexible-content-heavy screens.
+- Counter position class is no longer emitted by both PHP and JS — JS owns positioning end-to-end so the class doesn't appear twice in the DOM.
+
 ## [1.1.1] - 2026-05-08
 
 ### Fixed

@@ -14,31 +14,77 @@
 		return;
 	}
 
-	var config = window.acfCharcount || {};
+	var config        = window.acfCharcount || {};
+	var fieldTypes    = config.fieldTypes;
+	if ( ! fieldTypes || ! fieldTypes.length ) {
+		// No supported types localized — nothing to do.
+		return;
+	}
+	var fieldSelector = fieldTypes.map( function( type ) {
+		return '.acf-field[data-type="' + type + '"]';
+	} ).join( ', ' );
 
-	/**
-	 * Parse [maxchars:N] from a field's instruction text in the DOM.
-	 *
-	 * Falls back to checking the instruction element rendered by ACF
-	 * below the field label, allowing per-field max length without
-	 * needing server-side field group data in JS.
-	 *
-	 * @param {jQuery} $field The ACF field jQuery element.
-	 * @return {number} Parsed max length, or 0 if not found.
+	/*
+	 * Map of TinyMCE editor IDs → { $field, type } for WYSIWYG fields on the
+	 * page. A single global `AddEditor` listener (registered once below)
+	 * looks up entries here when WordPress recreates an editor (e.g., when
+	 * the editor swaps from Text mode back to Visual mode). This avoids the
+	 * O(n) listener accumulation pattern of binding `AddEditor` per field.
 	 */
-	function parseMaxcharsFromInstructions( $field ) {
-		var $instructions = $field.find( '.description' ).first();
-		if ( ! $instructions.length ) {
-			return 0;
-		}
+	var wysiwygFields = {};
 
-		var text  = $instructions.text() || '';
-		var match = text.match( /\[maxchars:(\d+)\]/ );
-		return match ? parseInt( match[1], 10 ) : 0;
+	if ( typeof tinymce !== 'undefined' ) {
+		tinymce.on( 'AddEditor', function( e ) {
+			if ( ! e.editor || ! wysiwygFields[ e.editor.id ] ) {
+				return;
+			}
+			var entry = wysiwygFields[ e.editor.id ];
+			e.editor.on( 'init', function() {
+				bindTinymce( e.editor, entry.$field, entry.type );
+			} );
+		} );
 	}
 
 	/**
-	 * Decode HTML entities and strip tags to get plain text length.
+	 * Minimal sprintf-style format helper.
+	 *
+	 * Supports %s (sequential) and %N$s (positional) so localized format
+	 * strings can reorder arguments — important for languages where the
+	 * counter reads more naturally with the noun first.
+	 *
+	 * @param {string} format Format string with %s or %N$s placeholders.
+	 * @param {Array}  args   Replacement values.
+	 * @return {string} Formatted string.
+	 */
+	function tplFormat( format, args ) {
+		var i = 0;
+		return ( format || '' ).replace( /%(?:(\d+)\$)?s/g, function( _match, idx ) {
+			var index = idx ? parseInt( idx, 10 ) - 1 : i++;
+			return args[ index ] != null ? args[ index ] : '';
+		} );
+	}
+
+	/**
+	 * Count Unicode codepoints in a string.
+	 *
+	 * Native `String.prototype.length` returns UTF-16 code units, so emoji
+	 * and astral-plane characters count as 2. Spreading into an array
+	 * iterates by codepoint, matching PHP's `mb_strlen` behavior so the
+	 * server-rendered count agrees with the client-side count.
+	 *
+	 * @param {string} str Source string.
+	 * @return {number} Codepoint count.
+	 */
+	function codepointLength( str ) {
+		if ( ! str ) {
+			return 0;
+		}
+		// Array.from is supported everywhere ACF supports.
+		return Array.from( str ).length;
+	}
+
+	/**
+	 * Decode HTML entities and strip tags to get plain text.
 	 *
 	 * Uses a temporary DOM element to let the browser handle entity
 	 * decoding (e.g. &amp; → &, &nbsp; → space) so the character
@@ -79,7 +125,7 @@
 			value = $input.val() || '';
 		}
 
-		return value.length;
+		return codepointLength( value );
 	}
 
 	/**
@@ -107,11 +153,41 @@
 	}
 
 	/**
+	 * Resolve the max length for a field from native maxlength or defaults.
+	 *
+	 * The server-side `acf/prepare_field` filter already strips the
+	 * [maxchars:N] tag from instructions, so this function only handles
+	 * the client-discoverable sources (input maxlength attribute and
+	 * plugin defaults). PHP renders counters for all known fields,
+	 * including dynamic repeater rows, so this branch is only hit
+	 * for edge cases where PHP didn't render a counter.
+	 *
+	 * @param {jQuery} $field The ACF field jQuery element.
+	 * @param {string} type   The field type.
+	 * @return {number} Max length, or 0 if none.
+	 */
+	function resolveMax( $field, type ) {
+		if ( 'wysiwyg' !== type ) {
+			var $input = $field.find( 'input[type="text"], textarea' ).first();
+			if ( $input.length && $input.attr( 'maxlength' ) ) {
+				return parseInt( $input.attr( 'maxlength' ), 10 ) || 0;
+			}
+		}
+
+		if ( config.defaults && config.defaults[ type ] ) {
+			return parseInt( config.defaults[ type ], 10 ) || 0;
+		}
+
+		return 0;
+	}
+
+	/**
 	 * Build and insert the counter element for a field.
 	 *
 	 * If the PHP-rendered counter is already present (server-side render),
 	 * this is a no-op. Otherwise it creates the counter from JS — useful
-	 * for dynamically added repeater/flex rows where PHP won't re-render.
+	 * for any edge case where ACF doesn't fire `acf/render_field` for a
+	 * dynamically added field.
 	 *
 	 * @param {jQuery} $field The ACF field jQuery element.
 	 * @return {jQuery|null} The counter element, or null if skipped.
@@ -124,64 +200,40 @@
 		}
 
 		var type = $field.data( 'type' );
-		var max  = 0;
+		var max  = resolveMax( $field, type );
 
-		// WYSIWYG fields don't have a native maxlength attribute, so
-		// only check [maxchars:N] in instructions. Text/textarea fields
-		// can also use ACF's built-in maxlength setting.
-		if ( 'wysiwyg' !== type ) {
-			var $input = $field.find( 'input[type="text"], textarea' ).first();
-			if ( $input.length && $input.attr( 'maxlength' ) ) {
-				max = parseInt( $input.attr( 'maxlength' ), 10 ) || 0;
-			}
-		}
-
-		if ( ! max ) {
-			max = parseMaxcharsFromInstructions( $field );
-		}
-
-		// Apply plugin default max length for this field type.
-		if ( ! max && config.defaults && config.defaults[ type ] ) {
-			max = parseInt( config.defaults[ type ], 10 ) || 0;
-		}
-
-		// In "configured" mode, skip fields without any limit.
-		if ( ! max && config.displayStyle !== 'always' ) {
+		// In "configured" mode, skip fields without any limit. Use a positive
+		// check on 'configured' to mirror the PHP-side logic exactly.
+		if ( ! max && 'configured' === config.displayStyle ) {
 			return null;
 		}
 
-		// Build the counter markup.
-		var html = '<span class="acf-cc-counter"';
+		var i18n        = config.i18n || {};
+		var currentSpan = '<span class="acf-cc-current">0</span>';
+		var content;
+
+		if ( max > 0 ) {
+			var maxSpan = '<span class="acf-cc-max">' + max + '</span>';
+			content = tplFormat( i18n.formatWithMax || '%1$s / %2$s characters', [ currentSpan, maxSpan ] );
+		} else {
+			content = tplFormat( i18n.formatNoMax || '%s characters', [ currentSpan ] );
+		}
+
+		var classAttr  = 'acf-cc-counter';
+		if ( 'below-left' === config.counterPosition ) {
+			classAttr += ' acf-cc-align-left';
+		}
+
+		var html = '<span class="' + classAttr + '"';
 		if ( max > 0 ) {
 			html += ' data-max="' + max + '"';
 		}
-		html += '>';
-		html += '<span class="acf-cc-current">0</span>';
-		if ( max > 0 ) {
-			html += ' / <span class="acf-cc-max">' + max + '</span>';
-		}
-		html += ' ' + ( config.i18n && config.i18n.characters ? config.i18n.characters : 'characters' );
-		html += '</span>';
+		html += '>' + content + '</span>';
 
 		var $counter = $( html );
 		$field.find( '.acf-input' ).first().append( $counter );
 
 		return $counter;
-	}
-
-	/**
-	 * Apply counter position class based on plugin settings.
-	 *
-	 * Both positions keep the counter below the field inside .acf-input;
-	 * the CSS class controls left vs right alignment.
-	 *
-	 * @param {jQuery} $field   The ACF field jQuery element.
-	 * @param {jQuery} $counter The counter element.
-	 */
-	function positionCounter( $field, $counter ) {
-		if ( 'below-left' === config.counterPosition ) {
-			$counter.addClass( 'acf-cc-align-left' );
-		}
 	}
 
 	/**
@@ -207,16 +259,12 @@
 			return;
 		}
 
-		// Position counter according to settings.
-		positionCounter( $field, $counter );
-
 		// Set initial count.
 		updateCounter( $field, type );
 
 		if ( 'wysiwyg' === type ) {
 			initWysiwyg( $field, type );
 		} else {
-			// Bind to input events for text and textarea.
 			$field.find( 'input[type="text"], textarea' ).first().on( 'input keyup', function() {
 				updateCounter( $field, type );
 			} );
@@ -226,11 +274,10 @@
 	/**
 	 * Initialize WYSIWYG counter bindings.
 	 *
-	 * TinyMCE editors may not be initialized when this runs, so we
-	 * watch for the editor init event as well. Also handles Visual/Text
-	 * tab switching — WordPress destroys and recreates TinyMCE when
-	 * toggling between tabs, so we re-bind on each AddEditor event
-	 * and listen for tab clicks to trigger an immediate count update.
+	 * Registers the field with the shared `wysiwygFields` map so the
+	 * single global `AddEditor` listener can wire up TinyMCE events
+	 * when (or if) the editor is created — including after a Visual/Text
+	 * tab swap, which destroys and recreates the TinyMCE instance.
 	 *
 	 * @param {jQuery} $field The ACF field jQuery element.
 	 * @param {string} type   The field type.
@@ -248,26 +295,17 @@
 			updateCounter( $field, type );
 		} );
 
+		// Register for the global AddEditor handler.
+		if ( editorId ) {
+			wysiwygFields[ editorId ] = { $field: $field, type: type };
+		}
+
 		// Bind to TinyMCE if already initialized.
 		if ( editorId && typeof tinymce !== 'undefined' && tinymce.get( editorId ) ) {
 			bindTinymce( tinymce.get( editorId ), $field, type );
 		}
 
-		// Watch for TinyMCE init — fires on first load and each time
-		// the user switches back to Visual mode (editor is re-created).
-		if ( typeof tinymce !== 'undefined' ) {
-			tinymce.on( 'AddEditor', function( e ) {
-				if ( e.editor && e.editor.id === editorId ) {
-					e.editor.on( 'init', function() {
-						bindTinymce( e.editor, $field, type );
-					} );
-				}
-			} );
-		}
-
-		// Handle Visual/Text tab clicks. When switching tabs, the active
-		// input changes so we update the count after a short delay to let
-		// WordPress complete the editor swap.
+		// Handle Visual/Text tab clicks — update the count after WP swaps editors.
 		$field.find( '.wp-editor-tabs' ).on( 'click', '.wp-switch-editor', function() {
 			setTimeout( function() {
 				updateCounter( $field, type );
@@ -278,27 +316,25 @@
 	/**
 	 * Bind TinyMCE editor events for live counting.
 	 *
+	 * Idempotent — guarded by `_acfCcBound` so we don't double-bind if
+	 * `bindTinymce` is called multiple times for the same editor.
+	 *
 	 * @param {tinymce.Editor} editor The TinyMCE editor instance.
 	 * @param {jQuery}         $field The ACF field jQuery element.
 	 * @param {string}         type   The field type.
 	 */
 	function bindTinymce( editor, $field, type ) {
+		if ( editor._acfCcBound ) {
+			updateCounter( $field, type );
+			return;
+		}
+		editor._acfCcBound = true;
 		editor.on( 'keyup change SetContent', function() {
 			updateCounter( $field, type );
 		} );
 		// Trigger initial update once the editor content is loaded.
 		updateCounter( $field, type );
 	}
-
-	/**
-	 * Selector string matching supported ACF field type wrappers.
-	 * Used by the generic `append` handler to find countable fields
-	 * inside dynamically added repeater/flex rows at any nesting depth.
-	 */
-	var fieldTypes    = config.fieldTypes || [ 'text', 'textarea', 'wysiwyg' ];
-	var fieldSelector = fieldTypes.map( function( type ) {
-		return '.acf-field[data-type="' + type + '"]';
-	} ).join( ', ' );
 
 	/*
 	 * Register ACF actions for each supported field type.

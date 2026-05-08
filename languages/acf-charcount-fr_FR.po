@@ -25,8 +25,8 @@ msgstr "ACF Compteur de caractères"
 
 #. Plugin URI of the plugin
 #: acf-charcount.php
-msgid "https://github.com/9wdigital/acf-charcount"
-msgstr "https://github.com/9wdigital/acf-charcount"
+msgid "https://github.com/dbrabyn/acf-charcount"
+msgstr "https://github.com/dbrabyn/acf-charcount"
 
 #. Description of the plugin
 #: acf-charcount.php
@@ -49,10 +49,19 @@ msgstr "https://9wdigital.com/"
 msgid "%s requires Advanced Custom Fields (ACF) to be installed and activated."
 msgstr "%s nécessite que Advanced Custom Fields (ACF) soit installé et activé."
 
-#: acf-charcount.php:151
-#: includes/class-counter.php:91
-msgid "characters"
-msgstr "caractères"
+#. translators: 1: current character count, 2: maximum character count
+#: acf-charcount.php
+#: includes/class-counter.php
+#, php-format
+msgid "%1$s / %2$s characters"
+msgstr "%1$s / %2$s caractères"
+
+#. translators: %s: current character count
+#: acf-charcount.php
+#: includes/class-counter.php
+#, php-format
+msgid "%s characters"
+msgstr "%s caractères"
 
 #: includes/class-settings.php:98
 msgid "ACF Char Count"

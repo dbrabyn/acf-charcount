@@ -49,12 +49,19 @@ class ACF_CC_Settings {
 	 * @var array
 	 */
 	const DEFAULTS = array(
-		'max_text'       => 0,
-		'max_textarea'   => 0,
-		'max_wysiwyg'    => 0,
-		'display_style'  => 'always',
+		'max_text'         => 0,
+		'max_textarea'     => 0,
+		'max_wysiwyg'      => 0,
+		'display_style'    => 'always',
 		'counter_position' => 'below-right',
 	);
+
+	/**
+	 * In-memory cache of merged settings for the current request.
+	 *
+	 * @var array|null
+	 */
+	private static $cache = null;
 
 	/**
 	 * Constructor — register hooks.
@@ -62,6 +69,19 @@ class ACF_CC_Settings {
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'add_settings_page' ), 20 );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
+
+		// Bust the request-scoped cache when settings are saved.
+		add_action( 'update_option_' . self::OPTION_NAME, array( __CLASS__, 'flush_cache' ) );
+		add_action( 'add_option_' . self::OPTION_NAME, array( __CLASS__, 'flush_cache' ) );
+	}
+
+	/**
+	 * Reset the in-memory settings cache.
+	 *
+	 * @return void
+	 */
+	public static function flush_cache() {
+		self::$cache = null;
 	}
 
 	/**
@@ -71,8 +91,7 @@ class ACF_CC_Settings {
 	 * @return mixed The setting value.
 	 */
 	public static function get( $key ) {
-		$settings = get_option( self::OPTION_NAME, self::DEFAULTS );
-		$settings = wp_parse_args( $settings, self::DEFAULTS );
+		$settings = self::get_all();
 
 		return isset( $settings[ $key ] ) ? $settings[ $key ] : null;
 	}
@@ -80,11 +99,17 @@ class ACF_CC_Settings {
 	/**
 	 * Get all settings merged with defaults.
 	 *
+	 * Cached for the duration of the request — fields render many times
+	 * per page (especially inside flexible content) and re-parsing the
+	 * option on each call is wasted work.
+	 *
 	 * @return array Complete settings array.
 	 */
 	public static function get_all() {
-		$settings = get_option( self::OPTION_NAME, self::DEFAULTS );
-		return wp_parse_args( $settings, self::DEFAULTS );
+		if ( null === self::$cache ) {
+			self::$cache = wp_parse_args( get_option( self::OPTION_NAME, self::DEFAULTS ), self::DEFAULTS );
+		}
+		return self::$cache;
 	}
 
 	/**

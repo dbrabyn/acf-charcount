@@ -52,15 +52,15 @@ class ACF_CC_Counter {
 	 * @return void
 	 */
 	public function render_counter( $field ) {
+		$settings      = ACF_CC_Settings::get_all();
 		$max_length    = $this->field_config->get_max_length( $field );
-		$display_style = ACF_CC_Settings::get( 'display_style' );
+		$display_style = $settings['display_style'];
 
 		// Apply plugin default max length if no per-field limit is set.
 		if ( 0 === $max_length ) {
 			$default_key = 'max_' . $field['type'];
-			$default_max = ACF_CC_Settings::get( $default_key );
-			if ( $default_max > 0 ) {
-				$max_length = $default_max;
+			if ( isset( $settings[ $default_key ] ) && $settings[ $default_key ] > 0 ) {
+				$max_length = (int) $settings[ $default_key ];
 			}
 		}
 
@@ -77,26 +77,33 @@ class ACF_CC_Counter {
 			$data_attrs = ' data-max="' . esc_attr( $max_length ) . '"';
 		}
 
-		// Build CSS classes including position alignment.
-		$classes = 'acf-cc-counter';
-		if ( 'below-left' === ACF_CC_Settings::get( 'counter_position' ) ) {
-			$classes .= ' acf-cc-align-left';
-		}
-
-		echo '<span class="' . esc_attr( $classes ) . '"' . $data_attrs . '>';
-		echo '<span class="acf-cc-current">' . esc_html( $current ) . '</span>';
+		// Position class is applied client-side by acf-charcount.js based on the
+		// localized counterPosition setting — kept out of PHP to avoid duplication.
+		echo '<span class="acf-cc-counter"' . $data_attrs . '>';
 		if ( $max_length > 0 ) {
-			echo ' / <span class="acf-cc-max">' . esc_html( $max_length ) . '</span>';
+			printf(
+				/* translators: 1: current character count, 2: maximum character count */
+				esc_html__( '%1$s / %2$s characters', 'acf-charcount' ),
+				'<span class="acf-cc-current">' . esc_html( $current ) . '</span>',
+				'<span class="acf-cc-max">' . esc_html( $max_length ) . '</span>'
+			);
+		} else {
+			printf(
+				/* translators: %s: current character count */
+				esc_html__( '%s characters', 'acf-charcount' ),
+				'<span class="acf-cc-current">' . esc_html( $current ) . '</span>'
+			);
 		}
-		echo ' ' . esc_html__( 'characters', 'acf-charcount' );
 		echo '</span>';
 	}
 
 	/**
 	 * Count characters in a field value.
 	 *
-	 * Strips HTML tags for WYSIWYG fields before counting.
-	 * Uses mb_strlen when available for multibyte support.
+	 * Strips HTML tags for WYSIWYG fields and decodes HTML entities so
+	 * the count reflects what the user actually sees, matching the JS
+	 * counter behavior. Uses mb_strlen for multibyte/Unicode-correct
+	 * counting (so emoji and accented characters count as one).
 	 *
 	 * @param string $value The field value.
 	 * @param string $type  The ACF field type.
@@ -104,8 +111,10 @@ class ACF_CC_Counter {
 	 */
 	private function count_characters( $value, $type ) {
 		if ( 'wysiwyg' === $type ) {
-			$value = wp_strip_all_tags( $value );
+			$value = wp_strip_all_tags( (string) $value );
 		}
+
+		$value = html_entity_decode( (string) $value, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 
 		return function_exists( 'mb_strlen' ) ? mb_strlen( $value ) : strlen( $value );
 	}

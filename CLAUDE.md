@@ -15,7 +15,7 @@ Displays character counts (current/max) beneath ACF fields to help content edito
 - PHP 8.1+
 - WordPress 6.x
 - ACF Pro or ACF Free (required dependency)
-- Vanilla JS for admin UI (no jQuery dependency if possible, fallback to jQuery if needed for ACF compatibility)
+- jQuery in admin UI — required for ACF JS API compatibility (`acf.addAction`, jQuery field elements). No standalone vanilla-JS layer is added on top.
 - No build tools — keep it simple, single JS file enqueued in admin
 - [Plugin Update Checker](https://github.com/YahnisElsts/plugin-update-checker) v5.6 (bundled in `lib/`) for automatic updates via GitHub Releases
 
