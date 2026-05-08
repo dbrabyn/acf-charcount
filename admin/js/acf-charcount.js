@@ -6,7 +6,7 @@
  *
  * @package ACF_Charcount
  */
-( function() {
+( function( $ ) {
 	'use strict';
 
 	// Bail if ACF JS API is not available.
@@ -163,7 +163,7 @@
 		html += ' ' + ( config.i18n && config.i18n.characters ? config.i18n.characters : 'characters' );
 		html += '</span>';
 
-		var $counter = acf.$( html );
+		var $counter = $( html );
 		$field.find( '.acf-input' ).first().append( $counter );
 
 		return $counter;
@@ -327,8 +327,8 @@
 	 */
 	acf.addAction( 'append', function( $el ) {
 		$el.find( fieldSelector ).each( function() {
-			initField( acf.$( this ) );
+			initField( $( this ) );
 		} );
 	} );
 
-} )();
+} )( jQuery );

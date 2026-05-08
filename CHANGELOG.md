@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.1] - 2026-05-08
+
+### Fixed
+- `TypeError: acf.$ is not a function` thrown when adding repeater/flex rows. ACF Pro 6.8.0.1 no longer exposes `acf.$` as a jQuery alias, so the IIFE now takes `jQuery` as `$` directly (`( function( $ ) { ... } )( jQuery );`).
+
 ## [1.1.0] - 2026-03-01
 
 ### Added
