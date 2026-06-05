@@ -182,20 +182,26 @@
 	}
 
 	/**
-	 * Build and insert the counter element for a field.
+	 * Build, insert, and position the counter element for a field.
 	 *
-	 * If the PHP-rendered counter is already present (server-side render),
-	 * this is a no-op. Otherwise it creates the counter from JS — useful
-	 * for any edge case where ACF doesn't fire `acf/render_field` for a
-	 * dynamically added field.
+	 * The counter is placed at the TOP of `.acf-input`, before the input,
+	 * so it reads label → counter → input and leaves the area below the
+	 * input clear for other plugins. ACF fires `acf/render_field` after the
+	 * input, so the PHP-rendered counter starts out below it; here we move
+	 * it to the front. If no counter exists (edge case where ACF didn't
+	 * fire `acf/render_field` for a dynamically added field), it's created
+	 * from JS and prepended in the same position.
 	 *
 	 * @param {jQuery} $field The ACF field jQuery element.
 	 * @return {jQuery|null} The counter element, or null if skipped.
 	 */
 	function ensureCounter( $field ) {
-		// Already rendered by PHP.
+		var $input = $field.find( '.acf-input' ).first();
+
+		// PHP-rendered counter: reposition it above the input.
 		var $existing = $field.find( '.acf-cc-counter' ).first();
 		if ( $existing.length ) {
+			$input.prepend( $existing );
 			return $existing;
 		}
 
@@ -224,14 +230,14 @@
 			classAttr += ' acf-cc-align-left';
 		}
 
-		var html = '<span class="' + classAttr + '"';
+		var html = '<span class="' + classAttr + '" aria-live="polite"';
 		if ( max > 0 ) {
 			html += ' data-max="' + max + '"';
 		}
 		html += '>' + content + '</span>';
 
 		var $counter = $( html );
-		$field.find( '.acf-input' ).first().append( $counter );
+		$input.prepend( $counter );
 
 		return $counter;
 	}
@@ -364,6 +370,20 @@
 	acf.addAction( 'append', function( $el ) {
 		$el.find( fieldSelector ).each( function() {
 			initField( $( this ) );
+		} );
+	} );
+
+	/*
+	 * Generic `remove` handler — release WYSIWYG editor registrations.
+	 *
+	 * Fired with the row/layout element just before ACF detaches it. Any
+	 * WYSIWYG editors inside are about to be destroyed, so drop their
+	 * entries from the `wysiwygFields` map to keep it from growing as rows
+	 * are repeatedly added and removed.
+	 */
+	acf.addAction( 'remove', function( $el ) {
+		$el.find( '.wp-editor-area' ).each( function() {
+			delete wysiwygFields[ this.id ];
 		} );
 	} );
 

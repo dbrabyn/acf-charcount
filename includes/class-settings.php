@@ -223,14 +223,14 @@ class ACF_CC_Settings {
 
 		$sanitized['max_text']     = isset( $input['max_text'] ) ? absint( $input['max_text'] ) : 0;
 		$sanitized['max_textarea'] = isset( $input['max_textarea'] ) ? absint( $input['max_textarea'] ) : 0;
-		$sanitized['max_wysiwyg'] = isset( $input['max_wysiwyg'] ) ? absint( $input['max_wysiwyg'] ) : 0;
+		$sanitized['max_wysiwyg']  = isset( $input['max_wysiwyg'] ) ? absint( $input['max_wysiwyg'] ) : 0;
 
-		$allowed_styles = array( 'always', 'configured' );
+		$allowed_styles             = array( 'always', 'configured' );
 		$sanitized['display_style'] = isset( $input['display_style'] ) && in_array( $input['display_style'], $allowed_styles, true )
 			? $input['display_style']
 			: 'always';
 
-		$allowed_positions = array( 'below-right', 'below-left' );
+		$allowed_positions             = array( 'below-right', 'below-left' );
 		$sanitized['counter_position'] = isset( $input['counter_position'] ) && in_array( $input['counter_position'], $allowed_positions, true )
 			? $input['counter_position']
 			: 'below-right';

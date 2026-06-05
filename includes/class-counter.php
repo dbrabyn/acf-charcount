@@ -16,8 +16,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Class ACF_CC_Counter
  *
- * Renders character counter markup below ACF fields
- * and determines which fields should display counters.
+ * Renders character counter markup for ACF fields and determines which
+ * fields should display counters. ACF fires `acf/render_field` after the
+ * input, so the counter is emitted at the end of `.acf-input`; the admin
+ * JS then repositions it to the top of `.acf-input`, above the input.
  */
 class ACF_CC_Counter {
 
@@ -42,7 +44,10 @@ class ACF_CC_Counter {
 	}
 
 	/**
-	 * Render the character counter element after a field.
+	 * Render the character counter element for a field.
+	 *
+	 * Emitted at the end of `.acf-input` (ACF fires this hook after the
+	 * input); the admin JS repositions it above the input on init.
 	 *
 	 * Outputs a counter for fields that have a character limit set
 	 * (via ACF maxlength, [maxchars:N] in instructions, or plugin defaults),
@@ -79,7 +84,7 @@ class ACF_CC_Counter {
 
 		// Position class is applied client-side by acf-charcount.js based on the
 		// localized counterPosition setting — kept out of PHP to avoid duplication.
-		echo '<span class="acf-cc-counter"' . $data_attrs . '>';
+		echo '<span class="acf-cc-counter" aria-live="polite"' . $data_attrs . '>';
 		if ( $max_length > 0 ) {
 			printf(
 				/* translators: 1: current character count, 2: maximum character count */
@@ -100,21 +105,26 @@ class ACF_CC_Counter {
 	/**
 	 * Count characters in a field value.
 	 *
-	 * Strips HTML tags for WYSIWYG fields and decodes HTML entities so
-	 * the count reflects what the user actually sees, matching the JS
-	 * counter behavior. Uses mb_strlen for multibyte/Unicode-correct
-	 * counting (so emoji and accented characters count as one).
+	 * For WYSIWYG fields, strips HTML tags and decodes the resulting HTML
+	 * entities so the count reflects the visible text — matching the JS
+	 * counter, which reads TinyMCE's decoded plain text. For text and
+	 * textarea fields the stored value already IS the visible text, so it
+	 * is counted as-is (no entity decoding) to stay consistent with the JS
+	 * counter, which counts the raw input value. Uses mb_strlen for
+	 * multibyte/Unicode-correct counting (so emoji and accented characters
+	 * count as one).
 	 *
 	 * @param string $value The field value.
 	 * @param string $type  The ACF field type.
 	 * @return int Character count.
 	 */
 	private function count_characters( $value, $type ) {
-		if ( 'wysiwyg' === $type ) {
-			$value = wp_strip_all_tags( (string) $value );
-		}
+		$value = (string) $value;
 
-		$value = html_entity_decode( (string) $value, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		if ( 'wysiwyg' === $type ) {
+			$value = wp_strip_all_tags( $value );
+			$value = html_entity_decode( $value, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		}
 
 		return function_exists( 'mb_strlen' ) ? mb_strlen( $value ) : strlen( $value );
 	}

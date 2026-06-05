@@ -4,10 +4,10 @@
  * @package ACF_Charcount
  */
 
-/* Base counter style — always rendered inside .acf-input */
+/* Base counter style — rendered at the top of .acf-input, above the input */
 .acf-cc-counter {
 	display: block;
-	margin-top: 4px;
+	margin-bottom: 4px;
 	font-size: 12px;
 	font-weight: 400;
 	line-height: 1.4;
@@ -18,12 +18,6 @@
 /* Left-aligned counter position */
 .acf-cc-counter.acf-cc-align-left {
 	text-align: left;
-}
-
-/* Counter positioned alongside a label */
-.acf-label .acf-cc-counter {
-	margin-left: 6px;
-	font-weight: 400;
 }
 
 /* Over-limit state: count exceeds max */
