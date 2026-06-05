@@ -82,20 +82,20 @@ class ACF_CC_Counter {
 			$data_attrs = ' data-max="' . esc_attr( $max_length ) . '"';
 		}
 
-		// Position class is applied client-side by acf-charcount.js based on the
-		// localized counterPosition setting — kept out of PHP to avoid duplication.
+		// Emitted inside .acf-input; acf-charcount.js moves it beside the field
+		// label/instruction on init (ACF has no hook that fires within .acf-label).
 		echo '<span class="acf-cc-counter" aria-live="polite"' . $data_attrs . '>';
 		if ( $max_length > 0 ) {
 			printf(
 				/* translators: 1: current character count, 2: maximum character count */
-				esc_html__( '%1$s / %2$s characters', 'acf-charcount' ),
+				esc_html__( '%1$s / %2$s chars', 'acf-charcount' ),
 				'<span class="acf-cc-current">' . esc_html( $current ) . '</span>',
 				'<span class="acf-cc-max">' . esc_html( $max_length ) . '</span>'
 			);
 		} else {
 			printf(
 				/* translators: %s: current character count */
-				esc_html__( '%s characters', 'acf-charcount' ),
+				esc_html__( '%s chars', 'acf-charcount' ),
 				'<span class="acf-cc-current">' . esc_html( $current ) . '</span>'
 			);
 		}

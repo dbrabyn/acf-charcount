@@ -50,14 +50,14 @@ msgstr ""
 #: acf-charcount.php
 #: includes/class-counter.php
 #, php-format
-msgid "%1$s / %2$s characters"
+msgid "%1$s / %2$s chars"
 msgstr ""
 
 #. translators: %s: current character count
 #: acf-charcount.php
 #: includes/class-counter.php
 #, php-format
-msgid "%s characters"
+msgid "%s chars"
 msgstr ""
 
 #: includes/class-settings.php:98
@@ -100,10 +100,6 @@ msgstr ""
 msgid "Counter Display"
 msgstr ""
 
-#: includes/class-settings.php:183
-msgid "Counter Position"
-msgstr ""
-
 #: includes/class-settings.php:222
 msgid "Set default maximum character lengths per field type. These apply when no per-field limit is configured via ACF maxlength or [maxchars:N]. Set to 0 for no limit."
 msgstr ""
@@ -118,14 +114,6 @@ msgstr ""
 
 #: includes/class-settings.php:275
 msgid "Only show on fields with a character limit set (via ACF maxlength, [maxchars:N], or defaults above)"
-msgstr ""
-
-#: includes/class-settings.php:292
-msgid "Below the field, right-aligned"
-msgstr ""
-
-#: includes/class-settings.php:297
-msgid "Below the field, left-aligned"
 msgstr ""
 
 #: includes/class-settings.php:314

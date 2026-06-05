@@ -90,7 +90,7 @@ acf-charcount/
 2. Work seamlessly with existing ACF workflows — no extra clicks, no configuration required to get started but provide a settings page to configure the plugin
 3. Character limit is set by the ACF field's settings, not by the plugin
 4. Be lightweight — no build tools, minimal performance impact on admin pages
-5. Counter should appear in the x / xx characters format and be displayed according to plugin settings page option: below-right or below-left
+5. Counter should appear in the `x / xx chars` format and render to the right of the field's instruction (or label, when there is no instruction), above the input
 6. Plugin settings page should include an option to display character count for fields without a character limit set
 
 ## Deliverables

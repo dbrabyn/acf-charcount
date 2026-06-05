@@ -53,14 +53,14 @@ msgstr "%s nécessite que Advanced Custom Fields (ACF) soit installé et activé
 #: acf-charcount.php
 #: includes/class-counter.php
 #, php-format
-msgid "%1$s / %2$s characters"
+msgid "%1$s / %2$s chars"
 msgstr "%1$s / %2$s caractères"
 
 #. translators: %s: current character count
 #: acf-charcount.php
 #: includes/class-counter.php
 #, php-format
-msgid "%s characters"
+msgid "%s chars"
 msgstr "%s caractères"
 
 #: includes/class-settings.php:98
@@ -103,10 +103,6 @@ msgstr "Paramètres d'affichage"
 msgid "Counter Display"
 msgstr "Affichage du compteur"
 
-#: includes/class-settings.php:183
-msgid "Counter Position"
-msgstr "Position du compteur"
-
 #: includes/class-settings.php:222
 msgid "Set default maximum character lengths per field type. These apply when no per-field limit is configured via ACF maxlength or [maxchars:N]. Set to 0 for no limit."
 msgstr "Définissez le nombre maximum de caractères par défaut pour chaque type de champ. Ces valeurs s'appliquent lorsqu'aucune limite n'est configurée via le maxlength ACF ou [maxchars:N]. Mettez 0 pour aucune limite."
@@ -122,14 +118,6 @@ msgstr "Toujours afficher le compteur sur tous les champs pris en charge"
 #: includes/class-settings.php:275
 msgid "Only show on fields with a character limit set (via ACF maxlength, [maxchars:N], or defaults above)"
 msgstr "Afficher uniquement sur les champs avec une limite de caractères définie (via maxlength ACF, [maxchars:N] ou les valeurs par défaut ci-dessus)"
-
-#: includes/class-settings.php:292
-msgid "Below the field, right-aligned"
-msgstr "Sous le champ, aligné à droite"
-
-#: includes/class-settings.php:297
-msgid "Below the field, left-aligned"
-msgstr "Sous le champ, aligné à gauche"
 
 #: includes/class-settings.php:314
 msgid "ACF Character Count Settings"

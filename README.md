@@ -12,7 +12,7 @@ A lightweight WordPress plugin that adds live character counters to Advanced Cus
 - **Per-field character limits** using ACF's built-in maxlength setting or a simple `[maxchars:N]` tag in field instructions
 - **Visual warning** when the character count exceeds the limit (counter turns red)
 - **Configurable display** — choose to show counters on all fields or only on fields with a limit set
-- **Counter position options** — below the field, aligned left or right
+- **Tidy placement** — the counter sits to the right of the field's instruction (or label), above the input, keeping the area below the field clear
 - **Automatic updates** — your WordPress sites are notified when a new version is released
 - **French translation** included, with support for additional languages
 
@@ -41,7 +41,6 @@ Go to **Settings > ACF Character Count** to configure the plugin:
 - **Counter Display** — Choose between:
   - *Always* — show counters on all supported fields
   - *Configured only* — show counters only on fields that have a character limit set
-- **Counter Position** — Display counters below the field, aligned to the right (default) or left.
 
 ### Per-Field Limits
 

@@ -15,9 +15,15 @@
 	text-align: right;
 }
 
-/* Left-aligned counter position */
-.acf-cc-counter.acf-cc-align-left {
-	text-align: left;
+/*
+ * Beside the label/instruction: float to the right of that line so the
+ * counter reads label/instruction → counter on a single row, above the
+ * input. The instruction text reflows to its left.
+ */
+.acf-label .acf-cc-counter {
+	float: right;
+	margin: 0 0 0 12px;
+	font-weight: 400;
 }
 
 /* Over-limit state: count exceeds max */

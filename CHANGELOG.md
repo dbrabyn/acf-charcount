@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2026-06-05
+
+### Changed
+- Counter now sits to the right of the field instruction (or the label, when there is no instruction) instead of on its own line, keeping the area below the input clear for other plugins.
+- Counter wording shortened from "characters" to "chars" (English; the French translation keeps "caractères").
+
+### Removed
+- "Counter Position" (below-right / below-left) setting. The counter now always renders beside the label, so the option no longer had any effect; existing stored values are ignored.
+
+## [1.3.0] - 2026-06-05
+
+### Changed
+- Character counter moved out from below the field input to above it, so the area beneath the field stays clear for other plugins. (Refined in 1.3.1 to sit beside the label/instruction.)
+
+### Fixed
+- Server- and client-side counts now agree for plain text/textarea values containing HTML-entity-like text — entity decoding is limited to WYSIWYG fields, matching the JS counter.
+- WYSIWYG editor registrations are released when a repeater/flexible-content row is removed, preventing a small internal map from growing as rows are added and removed.
+
+### Added
+- `aria-live="polite"` on the counter so screen readers announce the live count.
+
 ## [1.2.0] - 2026-05-08
 
 ### Fixed

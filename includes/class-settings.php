@@ -49,11 +49,10 @@ class ACF_CC_Settings {
 	 * @var array
 	 */
 	const DEFAULTS = array(
-		'max_text'         => 0,
-		'max_textarea'     => 0,
-		'max_wysiwyg'      => 0,
-		'display_style'    => 'always',
-		'counter_position' => 'below-right',
+		'max_text'      => 0,
+		'max_textarea'  => 0,
+		'max_wysiwyg'   => 0,
+		'display_style' => 'always',
 	);
 
 	/**
@@ -202,14 +201,6 @@ class ACF_CC_Settings {
 			self::PAGE_SLUG,
 			'acf_cc_display_section'
 		);
-
-		add_settings_field(
-			'acf_cc_counter_position',
-			__( 'Counter Position', 'acf-charcount' ),
-			array( $this, 'render_counter_position_field' ),
-			self::PAGE_SLUG,
-			'acf_cc_display_section'
-		);
 	}
 
 	/**
@@ -229,11 +220,6 @@ class ACF_CC_Settings {
 		$sanitized['display_style'] = isset( $input['display_style'] ) && in_array( $input['display_style'], $allowed_styles, true )
 			? $input['display_style']
 			: 'always';
-
-		$allowed_positions             = array( 'below-right', 'below-left' );
-		$sanitized['counter_position'] = isset( $input['counter_position'] ) && in_array( $input['counter_position'], $allowed_positions, true )
-			? $input['counter_position']
-			: 'below-right';
 
 		return $sanitized;
 	}
@@ -298,28 +284,6 @@ class ACF_CC_Settings {
 			<label>
 				<input type="radio" name="<?php echo esc_attr( self::OPTION_NAME . '[display_style]' ); ?>" value="configured" <?php checked( $value, 'configured' ); ?> />
 				<?php esc_html_e( 'Only show on fields with a character limit set (via ACF maxlength, [maxchars:N], or defaults above)', 'acf-charcount' ); ?>
-			</label>
-		</fieldset>
-		<?php
-	}
-
-	/**
-	 * Render the counter position radio buttons.
-	 *
-	 * @return void
-	 */
-	public function render_counter_position_field() {
-		$value = self::get( 'counter_position' );
-		?>
-		<fieldset>
-			<label>
-				<input type="radio" name="<?php echo esc_attr( self::OPTION_NAME . '[counter_position]' ); ?>" value="below-right" <?php checked( $value, 'below-right' ); ?> />
-				<?php esc_html_e( 'Below the field, right-aligned', 'acf-charcount' ); ?>
-			</label>
-			<br />
-			<label>
-				<input type="radio" name="<?php echo esc_attr( self::OPTION_NAME . '[counter_position]' ); ?>" value="below-left" <?php checked( $value, 'below-left' ); ?> />
-				<?php esc_html_e( 'Below the field, left-aligned', 'acf-charcount' ); ?>
 			</label>
 		</fieldset>
 		<?php

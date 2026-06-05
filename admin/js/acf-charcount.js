@@ -182,26 +182,74 @@
 	}
 
 	/**
+	 * Resolve the element the counter should be inserted into.
+	 *
+	 * Preference, so the counter sits on one line above the input and the
+	 * area below the input stays clear:
+	 *   1. Right of the field instruction (`.acf-label .description`).
+	 *   2. Right of the field label, when there is no instruction.
+	 *   3. Top of `.acf-input`, as a fallback for fields with no label block.
+	 *
+	 * The label/instruction targets float the counter right via CSS.
+	 *
+	 * @param {jQuery} $field The ACF field jQuery element.
+	 * @return {jQuery} The element to insert the counter into.
+	 */
+	function counterTarget( $field ) {
+		var $label = $field.find( '.acf-label' ).first();
+		if ( ! $label.length ) {
+			return $field.find( '.acf-input' ).first();
+		}
+
+		var $desc = $label.find( '.description' ).first();
+		if ( $desc.length ) {
+			return $desc;
+		}
+
+		var $labelEl = $label.find( 'label' ).first();
+		return $labelEl.length ? $labelEl : $label;
+	}
+
+	/**
+	 * Insert (or move) the counter into its resolved target.
+	 *
+	 * Label/instruction targets get the counter appended so it floats to the
+	 * right of that line. The `.acf-input` fallback gets it prepended so it
+	 * sits above the input.
+	 *
+	 * @param {jQuery} $target  The resolved target element.
+	 * @param {jQuery} $counter The counter element.
+	 * @return {void}
+	 */
+	function placeCounter( $target, $counter ) {
+		if ( $target.hasClass( 'acf-input' ) ) {
+			$target.prepend( $counter );
+		} else {
+			$target.append( $counter );
+		}
+	}
+
+	/**
 	 * Build, insert, and position the counter element for a field.
 	 *
-	 * The counter is placed at the TOP of `.acf-input`, before the input,
-	 * so it reads label → counter → input and leaves the area below the
-	 * input clear for other plugins. ACF fires `acf/render_field` after the
-	 * input, so the PHP-rendered counter starts out below it; here we move
-	 * it to the front. If no counter exists (edge case where ACF didn't
+	 * The counter is placed beside the field's instruction (or label) so it
+	 * reads label → counter → input and leaves the area below the input clear
+	 * for other plugins. ACF fires `acf/render_field` after the input, so the
+	 * PHP-rendered counter starts out inside `.acf-input`; here we move it to
+	 * the resolved target. If no counter exists (edge case where ACF didn't
 	 * fire `acf/render_field` for a dynamically added field), it's created
-	 * from JS and prepended in the same position.
+	 * from JS and inserted in the same position.
 	 *
 	 * @param {jQuery} $field The ACF field jQuery element.
 	 * @return {jQuery|null} The counter element, or null if skipped.
 	 */
 	function ensureCounter( $field ) {
-		var $input = $field.find( '.acf-input' ).first();
+		var $target = counterTarget( $field );
 
-		// PHP-rendered counter: reposition it above the input.
+		// PHP-rendered counter: move it into the resolved target.
 		var $existing = $field.find( '.acf-cc-counter' ).first();
 		if ( $existing.length ) {
-			$input.prepend( $existing );
+			placeCounter( $target, $existing );
 			return $existing;
 		}
 
@@ -220,24 +268,19 @@
 
 		if ( max > 0 ) {
 			var maxSpan = '<span class="acf-cc-max">' + max + '</span>';
-			content = tplFormat( i18n.formatWithMax || '%1$s / %2$s characters', [ currentSpan, maxSpan ] );
+			content = tplFormat( i18n.formatWithMax || '%1$s / %2$s chars', [ currentSpan, maxSpan ] );
 		} else {
-			content = tplFormat( i18n.formatNoMax || '%s characters', [ currentSpan ] );
+			content = tplFormat( i18n.formatNoMax || '%s chars', [ currentSpan ] );
 		}
 
-		var classAttr  = 'acf-cc-counter';
-		if ( 'below-left' === config.counterPosition ) {
-			classAttr += ' acf-cc-align-left';
-		}
-
-		var html = '<span class="' + classAttr + '" aria-live="polite"';
+		var html = '<span class="acf-cc-counter" aria-live="polite"';
 		if ( max > 0 ) {
 			html += ' data-max="' + max + '"';
 		}
 		html += '>' + content + '</span>';
 
 		var $counter = $( html );
-		$input.prepend( $counter );
+		placeCounter( $target, $counter );
 
 		return $counter;
 	}

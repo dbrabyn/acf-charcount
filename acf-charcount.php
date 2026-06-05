@@ -3,7 +3,7 @@
  * Plugin Name: ACF Character Count
  * Plugin URI:  https://github.com/dbrabyn/acf-charcount
  * Description: Adds live character counters to ACF text-based fields in the WordPress admin UI.
- * Version:     1.3.0
+ * Version:     1.3.1
  * Author:      David Brabyn 9W
  * Author URI:  https://9wdigital.com/
  * License:     GPL-2.0-or-later
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Plugin constants.
  */
-define( 'ACF_CC_VERSION', '1.3.0' );
+define( 'ACF_CC_VERSION', '1.3.1' );
 define( 'ACF_CC_PLUGIN_FILE', __FILE__ );
 define( 'ACF_CC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'ACF_CC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -166,19 +166,18 @@ function acf_cc_enqueue_admin_assets() {
 		'acf-charcount',
 		'acfCharcount',
 		array(
-			'fieldTypes'      => ACF_CC_SUPPORTED_FIELD_TYPES,
-			'displayStyle'    => $settings['display_style'],
-			'counterPosition' => $settings['counter_position'],
-			'defaults'        => array(
+			'fieldTypes'   => ACF_CC_SUPPORTED_FIELD_TYPES,
+			'displayStyle' => $settings['display_style'],
+			'defaults'     => array(
 				'text'     => $settings['max_text'],
 				'textarea' => $settings['max_textarea'],
 				'wysiwyg'  => $settings['max_wysiwyg'],
 			),
-			'i18n'            => array(
+			'i18n'         => array(
 				/* translators: 1: current character count, 2: maximum character count */
-				'formatWithMax' => __( '%1$s / %2$s characters', 'acf-charcount' ),
+				'formatWithMax' => __( '%1$s / %2$s chars', 'acf-charcount' ),
 				/* translators: %s: current character count */
-				'formatNoMax'   => __( '%s characters', 'acf-charcount' ),
+				'formatNoMax'   => __( '%s chars', 'acf-charcount' ),
 			),
 		)
 	);
