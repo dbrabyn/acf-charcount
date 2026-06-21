@@ -52,7 +52,7 @@ class ACF_CC_Settings {
 		'max_text'      => 0,
 		'max_textarea'  => 0,
 		'max_wysiwyg'   => 0,
-		'display_style' => 'always',
+		'display_style' => 'configured',
 	);
 
 	/**
@@ -142,6 +142,22 @@ class ACF_CC_Settings {
 			)
 		);
 
+		// Display settings section.
+		add_settings_section(
+			'acf_cc_display_section',
+			__( 'Display Settings', 'acf-charcount' ),
+			array( $this, 'render_display_section' ),
+			self::PAGE_SLUG
+		);
+
+		add_settings_field(
+			'acf_cc_display_style',
+			__( 'Counter Display', 'acf-charcount' ),
+			array( $this, 'render_display_style_field' ),
+			self::PAGE_SLUG,
+			'acf_cc_display_section'
+		);
+
 		// Default character limits section.
 		add_settings_section(
 			'acf_cc_defaults_section',
@@ -185,22 +201,6 @@ class ACF_CC_Settings {
 				'description' => __( 'Default max characters for WYSIWYG fields. 0 = no limit.', 'acf-charcount' ),
 			)
 		);
-
-		// Display settings section.
-		add_settings_section(
-			'acf_cc_display_section',
-			__( 'Display Settings', 'acf-charcount' ),
-			array( $this, 'render_display_section' ),
-			self::PAGE_SLUG
-		);
-
-		add_settings_field(
-			'acf_cc_display_style',
-			__( 'Counter Display', 'acf-charcount' ),
-			array( $this, 'render_display_style_field' ),
-			self::PAGE_SLUG,
-			'acf_cc_display_section'
-		);
 	}
 
 	/**
@@ -219,7 +219,7 @@ class ACF_CC_Settings {
 		$allowed_styles             = array( 'always', 'configured' );
 		$sanitized['display_style'] = isset( $input['display_style'] ) && in_array( $input['display_style'], $allowed_styles, true )
 			? $input['display_style']
-			: 'always';
+			: 'configured';
 
 		return $sanitized;
 	}
@@ -277,13 +277,13 @@ class ACF_CC_Settings {
 		?>
 		<fieldset>
 			<label>
-				<input type="radio" name="<?php echo esc_attr( self::OPTION_NAME . '[display_style]' ); ?>" value="always" <?php checked( $value, 'always' ); ?> />
-				<?php esc_html_e( 'Always show counter on all supported fields', 'acf-charcount' ); ?>
+				<input type="radio" name="<?php echo esc_attr( self::OPTION_NAME . '[display_style]' ); ?>" value="configured" <?php checked( $value, 'configured' ); ?> />
+				<?php esc_html_e( 'Only show on fields with a character limit set (via ACF maxlength, [maxchars:N], or defaults below)', 'acf-charcount' ); ?>
 			</label>
 			<br />
 			<label>
-				<input type="radio" name="<?php echo esc_attr( self::OPTION_NAME . '[display_style]' ); ?>" value="configured" <?php checked( $value, 'configured' ); ?> />
-				<?php esc_html_e( 'Only show on fields with a character limit set (via ACF maxlength, [maxchars:N], or defaults above)', 'acf-charcount' ); ?>
+				<input type="radio" name="<?php echo esc_attr( self::OPTION_NAME . '[display_style]' ); ?>" value="always" <?php checked( $value, 'always' ); ?> />
+				<?php esc_html_e( 'Always show counter on all supported fields', 'acf-charcount' ); ?>
 			</label>
 		</fieldset>
 		<?php

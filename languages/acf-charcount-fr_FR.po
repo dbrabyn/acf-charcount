@@ -116,8 +116,8 @@ msgid "Always show counter on all supported fields"
 msgstr "Toujours afficher le compteur sur tous les champs pris en charge"
 
 #: includes/class-settings.php:275
-msgid "Only show on fields with a character limit set (via ACF maxlength, [maxchars:N], or defaults above)"
-msgstr "Afficher uniquement sur les champs avec une limite de caractères définie (via maxlength ACF, [maxchars:N] ou les valeurs par défaut ci-dessus)"
+msgid "Only show on fields with a character limit set (via ACF maxlength, [maxchars:N], or defaults below)"
+msgstr "Afficher uniquement sur les champs avec une limite de caractères définie (via maxlength ACF, [maxchars:N] ou les valeurs par défaut ci-dessous)"
 
 #: includes/class-settings.php:314
 msgid "ACF Character Count Settings"

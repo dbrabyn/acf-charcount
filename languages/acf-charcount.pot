@@ -113,7 +113,7 @@ msgid "Always show counter on all supported fields"
 msgstr ""
 
 #: includes/class-settings.php:275
-msgid "Only show on fields with a character limit set (via ACF maxlength, [maxchars:N], or defaults above)"
+msgid "Only show on fields with a character limit set (via ACF maxlength, [maxchars:N], or defaults below)"
 msgstr ""
 
 #: includes/class-settings.php:314
